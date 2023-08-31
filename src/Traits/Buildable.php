@@ -308,8 +308,12 @@ trait Buildable
                      * The risk of this change is if any application code is dependent on the `pivotParent` property
                      * of a cached Pivot record, then you're a bit out of luck and would need to have a fallback.
                      */
-                    if (is_iterable($value) && !empty($value[0]) && is_object($value[0]) && $value[0]?->pivot?->pivotParent) {
-                        unset($value[0]->pivot->pivotParent);
+                    if (is_iterable($value) && !empty($value)) {
+                                                foreach ($value as $index => $model) {
+                                                    if (!empty($model) && is_object($model) && $model?->pivot?->pivotParent) {
+                                unset($model->pivot->pivotParent);
+                                                    }
+                                                }
                     }
                     return [
                         "key" => $cacheKey,
