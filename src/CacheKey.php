@@ -108,7 +108,7 @@ class CacheKey
         }
 
         if ($where["second"] instanceof Expression) {
-	    $where["second"] = $this->expressionToString($where["second"]);
+	        $where["second"] = $this->expressionToString($where["second"]);
         }
 
         return "-{$where["boolean"]}_{$where["first"]}_{$where["operator"]}_{$where["second"]}";
