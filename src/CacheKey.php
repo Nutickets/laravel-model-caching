@@ -241,7 +241,7 @@ class CacheKey
         $value .= $this->getValuesClause($where);
 
         $column = "";
-        $column .= isset($where["column"]) ? $where["column"] : "";
+        $column .= isset($where["column"]) ? $this->expressionToString($where["column"]) : "";
         $column .= isset($where["columns"]) ? implode("-", $where["columns"]) : "";
 
         return "-{$column}_{$value}";
