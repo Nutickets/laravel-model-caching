@@ -2,6 +2,7 @@
 
 use Exception;
 use GeneaLabs\LaravelModelCaching\Traits\CachePrefixing;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -100,6 +101,14 @@ class CacheKey
     {
         if ($where["type"] !== "Column") {
             return "";
+        }
+        
+        if ($where["first"] instanceof Expression) {
+            $where["first"] = $this->expressionToString($where["first"]);
+        }
+
+        if ($where["second"] instanceof Expression) {
+	    $where["second"] = $this->expressionToString($where["second"]);
         }
 
         return "-{$where["boolean"]}_{$where["first"]}_{$where["operator"]}_{$where["second"]}";
@@ -205,14 +214,19 @@ class CacheKey
         }
 
         $orders = collect($this->query->orders);
-
+        
         return $orders
             ->reduce(function ($carry, $order) {
                 if (($order["type"] ?? "") === "Raw") {
                     return $carry . "_orderByRaw_" . (new Str)->slug($order["sql"]);
                 }
 
-                return $carry . "_orderBy_" . $order["column"] . "_" . $order["direction"];
+                return sprintf(
+                    '%s_orderBy_%s_%s',
+                    $carry,
+                    $this->expressionToString($order["column"]),
+                    $order["direction"]
+                );
             })
             ?: "";
     }
@@ -246,7 +260,11 @@ class CacheKey
         if (property_exists($this->query, "columns")
             && $this->query->columns
         ) {
-            return "_" . implode("_", $this->query->columns);
+            $columns = array_map(function ($column) {                
+                return $this->expressionToString($column);
+            }, $this->query->columns);
+
+            return "_" . implode("_", $columns);
         }
 
         return "_" . implode("_", $columns);
@@ -315,14 +333,18 @@ class CacheKey
         }
 
         if (is_array((new Arr)->get($where, "values"))) {
-            return implode("_", collect($where["values"])->flatten()->toArray());
+            $values = collect($where["values"])->flatten()->toArray();
+            return implode("_", $this->processEnums($values));
         }
 
         if (is_array((new Arr)->get($where, "value"))) {
-            return implode("_", collect($where["value"])->flatten()->toArray());
+            $values = collect($where["value"])->flatten()->toArray();
+            return implode("_", $this->processEnums($values));
         }
 
-        return (new Arr)->get($where, "value", "");
+        $value = (new Arr)->get($where, "value", "");
+
+        return $this->processEnum($value);
     }
 
     protected function getValuesFromBindings(array $where, string $values) : string
@@ -422,5 +444,32 @@ class CacheKey
         }
 
         return $result;
+    }
+
+    private function processEnum(\BackedEnum|\UnitEnum|Expression|string $value): string
+    {
+        if ($value instanceof \BackedEnum) {
+            return $value->value;
+        } elseif ($value instanceof \UnitEnum) {
+            return $value->name;
+        } elseif ($value instanceof Expression) {
+            return $this->expressionToString($value);
+        }
+
+        return $value;
+    }
+
+    private function processEnums(array $values): array
+    {
+        return array_map(fn($value) => $this->processEnum($value), $values);
+    }
+
+    private function expressionToString(Expression|string $value): string
+    {
+        if (is_string($value)) {
+            return $value;
+        }
+
+        return $value->getValue($this->query->getConnection()->getQueryGrammar());
     }
 }
