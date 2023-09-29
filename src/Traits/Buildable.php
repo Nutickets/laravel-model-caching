@@ -1,5 +1,6 @@
 <?php namespace GeneaLabs\LaravelModelCaching\Traits;
 
+use Illuminate\Database\Query\Expression;
 use Illuminate\Pagination\Paginator;
 
 /**
@@ -13,9 +14,14 @@ trait Buildable
             return parent::avg($column);
         }
 
-        $cacheKey = $this->makeCacheKey(["*"], null, "-avg_{$column}");
+        $cacheKey = $this->makeCacheKey(["*"], null, "-avg_{$this->expressionToString($column)}");
 
         return $this->cachedValue(func_get_args(), $cacheKey);
+    }
+
+    public function average($column)
+    {
+        return $this->avg($column);
     }
 
     public function count($columns = "*")
@@ -215,7 +221,7 @@ trait Buildable
             return parent::sum($column);
         }
 
-        $cacheKey = $this->makeCacheKey(["*"], null, "-sum_{$column}");
+        $cacheKey = $this->makeCacheKey(["*"], null, "-sum_{$this->expressionToString($column)}");
 
         return $this->cachedValue(func_get_args(), $cacheKey);
     }
@@ -332,5 +338,14 @@ trait Buildable
                     ];
                 }
             );
+    }
+
+    private function expressionToString(Expression|string $value): string
+    {
+        if (is_string($value)) {
+            return $value;
+        }
+
+        return $value->getValue($this->query->getGrammar());
     }
 }

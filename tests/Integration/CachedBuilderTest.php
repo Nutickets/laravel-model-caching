@@ -5,6 +5,7 @@ use GeneaLabs\LaravelModelCaching\Tests\Fixtures\Book;
 use GeneaLabs\LaravelModelCaching\Tests\Fixtures\UncachedAuthor;
 use GeneaLabs\LaravelModelCaching\Tests\Fixtures\Http\Resources\Author as AuthorResource;
 use GeneaLabs\LaravelModelCaching\Tests\IntegrationTestCase;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Str;
 
 /**
@@ -175,6 +176,27 @@ class CachedBuilderTest extends IntegrationTestCase
             ->get($key)['value'];
         $liveResult = (new UncachedAuthor)->with('books', 'profile')
             ->avg('id');
+
+        $this->assertEquals($authorId, $cachedResult);
+        $this->assertEquals($liveResult, $cachedResult);
+    }
+
+    public function testRawAvgModelResultsCreatesCache()
+    {
+        $authorId = (new Author)->with('books', 'profile')
+            ->avg(new Expression('id + id'));
+        $key = sha1("genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:authors:genealabslaravelmodelcachingtestsfixturesauthor-authors.deleted_at_null-testing:{$this->testingSqlitePath}testing.sqlite:books-testing:{$this->testingSqlitePath}testing.sqlite:profile-avg_id + id");
+        $tags = [
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesauthor",
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesbook",
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesprofile",
+        ];
+
+        $cachedResult = $this->cache()
+            ->tags($tags)
+            ->get($key)['value'];
+        $liveResult = (new UncachedAuthor)->with('books', 'profile')
+            ->avg(new Expression('id + id'));
 
         $this->assertEquals($authorId, $cachedResult);
         $this->assertEquals($liveResult, $cachedResult);
@@ -351,6 +373,26 @@ class CachedBuilderTest extends IntegrationTestCase
             ->get($key)['value'];
         $liveResult = (new UncachedAuthor)->with('books', 'profile')
             ->sum('id');
+
+        $this->assertEquals($authorId, $cachedResult);
+        $this->assertEquals($liveResult, $cachedResult);
+    }
+
+    public function testRawSumModelResultsCreatesCache()
+    {
+        $authorId = (new Author)->with('books', 'profile')
+            ->sum(new Expression('`id` + `id`'));
+        $key = sha1("genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:authors:genealabslaravelmodelcachingtestsfixturesauthor-authors.deleted_at_null-testing:{$this->testingSqlitePath}testing.sqlite:books-testing:{$this->testingSqlitePath}testing.sqlite:profile-sum_`id` + `id`");
+        $tags = [
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesauthor",
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesbook",
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesprofile",
+        ];
+
+        $cachedResult = $this->cache()->tags($tags)
+            ->get($key)['value'];
+        $liveResult = (new UncachedAuthor)->with('books', 'profile')
+            ->sum(new Expression('`id` + `id`'));
 
         $this->assertEquals($authorId, $cachedResult);
         $this->assertEquals($liveResult, $cachedResult);
