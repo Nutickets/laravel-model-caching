@@ -144,7 +144,7 @@ trait Buildable
             return parent::max($column);
         }
 
-        $cacheKey = $this->makeCacheKey(["*"], null, "-max_{$column}");
+        $cacheKey = $this->makeCacheKey(["*"], null, "-max_{$this->expressionToString($column)}");
 
         return $this->cachedValue(func_get_args(), $cacheKey);
     }
@@ -155,7 +155,7 @@ trait Buildable
             return parent::min($column);
         }
 
-        $cacheKey = $this->makeCacheKey(["*"], null, "-min_{$column}");
+        $cacheKey = $this->makeCacheKey(["*"], null, "-min_{$this->expressionToString($column)}");
 
         return $this->cachedValue(func_get_args(), $cacheKey);
     }

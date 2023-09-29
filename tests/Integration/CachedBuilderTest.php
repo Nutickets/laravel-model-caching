@@ -318,6 +318,26 @@ class CachedBuilderTest extends IntegrationTestCase
         $this->assertEquals($liveResult, $cachedResult);
     }
 
+    public function testRawMaxModelResultsCreatesCache()
+    {
+        $authorId = (new Author)->with('books', 'profile')
+            ->max(new Expression('id + id'));
+        $key = sha1("genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:authors:genealabslaravelmodelcachingtestsfixturesauthor-authors.deleted_at_null-testing:{$this->testingSqlitePath}testing.sqlite:books-testing:{$this->testingSqlitePath}testing.sqlite:profile-max_id + id");
+        $tags = [
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesauthor",
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesbook",
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesprofile",
+        ];
+
+        $cachedResult = $this->cache()->tags($tags)
+            ->get($key)['value'];
+        $liveResult = (new UncachedAuthor)->with('books', 'profile')
+            ->max(new Expression('id + id'));
+
+        $this->assertEquals($authorId, $cachedResult);
+        $this->assertEquals($liveResult, $cachedResult);
+    }
+
     public function testMinModelResultsCreatesCache()
     {
         $authorId = (new Author)->with('books', 'profile')
@@ -333,6 +353,26 @@ class CachedBuilderTest extends IntegrationTestCase
             ->get($key)['value'];
         $liveResult = (new UncachedAuthor)->with('books', 'profile')
             ->min('id');
+
+        $this->assertEquals($authorId, $cachedResult);
+        $this->assertEquals($liveResult, $cachedResult);
+    }
+
+    public function testRawMinModelResultsCreatesCache()
+    {
+        $authorId = (new Author)->with('books', 'profile')
+            ->min(new Expression('id + id'));
+        $key = sha1("genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:authors:genealabslaravelmodelcachingtestsfixturesauthor-authors.deleted_at_null-testing:{$this->testingSqlitePath}testing.sqlite:books-testing:{$this->testingSqlitePath}testing.sqlite:profile-min_id + id");
+        $tags = [
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesauthor",
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesbook",
+            "genealabs:laravel-model-caching:testing:{$this->testingSqlitePath}testing.sqlite:genealabslaravelmodelcachingtestsfixturesprofile",
+        ];
+
+        $cachedResult = $this->cache()->tags($tags)
+            ->get($key)['value'];
+        $liveResult = (new UncachedAuthor)->with('books', 'profile')
+            ->min(new Expression('id + id'));
 
         $this->assertEquals($authorId, $cachedResult);
         $this->assertEquals($liveResult, $cachedResult);
