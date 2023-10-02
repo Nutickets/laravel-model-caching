@@ -446,7 +446,7 @@ class CacheKey
         return $result;
     }
 
-    private function processEnum(\BackedEnum|\UnitEnum|Expression|string $value): string
+    private function processEnum(\BackedEnum|\UnitEnum|Expression|string|null $value): string
     {
         if ($value instanceof \BackedEnum) {
             return $value->value;
@@ -454,6 +454,9 @@ class CacheKey
             return $value->name;
         } elseif ($value instanceof Expression) {
             return $this->expressionToString($value);
+        } elseif (is_null($value)) {
+            // @todo - this is just a patch on our side, for what is resolved by https://github.com/laravel/framework/pull/48606 being merged.
+            return 'null';
         }
 
         return $value;
