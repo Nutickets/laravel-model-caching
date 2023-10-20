@@ -298,7 +298,7 @@ class CacheKey
 
     protected function getTableSlug() : string
     {
-        return (new Str)->slug($this->query->from)
+        return (new Str)->slug($this->expressionToString($this->query->from))
             . ":";
     }
 
