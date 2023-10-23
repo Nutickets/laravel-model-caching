@@ -340,12 +340,12 @@ trait Buildable
             );
     }
 
-    private function expressionToString(Expression|string $value): string
+    private function expressionToString($value)
     {
-        if (is_string($value)) {
+        if (! $value instanceof Expression) {
             return $value;
         }
 
-        return $value->getValue($this->query->getGrammar());
+        return $this->query->getGrammar()->getValue($value);
     }
 }

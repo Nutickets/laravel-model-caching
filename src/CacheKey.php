@@ -469,12 +469,12 @@ class CacheKey
         return array_map(fn($value) => $this->processEnum($value), $values);
     }
 
-    private function expressionToString(Expression|string $value): string
+    private function expressionToString($value)
     {
-        if (is_string($value)) {
+        if (! $value instanceof Expression) {
             return $value;
         }
 
-        return $value->getValue($this->query->getConnection()->getQueryGrammar());
+        return $this->query->getGrammar()->getValue($value);
     }
 }
