@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: [8.2, 8.1]
+        php: [8.3, 8.2]
 
     name: PHP ${{ matrix.php }}
 
@@ -42,9 +42,9 @@ jobs:
 
     - uses: harmon758/postgresql-action@v1
       with:
-        postgresql version: '11'
+        postgresql version: '15'
         postgresql db: 'testing'
-        postgresql user: 'homestead'
+        postgresql user: 'forge'
         postgresql password: 'secret'
 
     - name: Remove Nova on a pull request
@@ -56,7 +56,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        composer config "http-basic.nova.laravel.com" "${{ secrets.NOVA_USERNAME }}" "${{ secrets.NOVA_PASSWORD }}"
+        composer config "http-basic.nova.laravel.com" "${{ secrets.NOVA_USERNAME }}" "${{ secrets.NOVA_LICENSE_KEY }}"
         composer install -q --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist
 
     - name: Execute Integration and Feature tests via PHPUnit
