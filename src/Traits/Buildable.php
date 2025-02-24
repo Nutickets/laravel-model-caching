@@ -176,7 +176,7 @@ trait Buildable
         if (is_array($page)) {
             $page = $this->recursiveImplodeWithKey($page);
         }
-        
+
         $columns = collect($columns)->toArray();
         $keyDifferentiator = "-paginate_by_{$perPage}_{$pageName}_{$page}";
 
@@ -325,12 +325,12 @@ trait Buildable
                      * The risk of this change is if any application code is dependent on the `pivotParent` property
                      * of a cached Pivot record, then you're a bit out of luck and would need to have a fallback.
                      */
-                    if (is_iterable($value) && !empty($value)) {
-                                                foreach ($value as $index => $model) {
-                                                    if (!empty($model) && is_object($model) && $model?->pivot?->pivotParent) {
+                    if (is_iterable($value) && ! empty($value)) {
+                        foreach ($value as $model) {
+                            if (! empty($model) && is_object($model) && $model?->pivot?->pivotParent) {
                                 unset($model->pivot->pivotParent);
-                                                    }
-                                                }
+                            }
+                        }
                     }
                     return [
                         "key" => $cacheKey,

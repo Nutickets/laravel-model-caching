@@ -246,7 +246,7 @@ class CacheKey
 
         $column = "";
 
-    if (data_get($where, "column") instanceof Expression) {
+        if (data_get($where, "column") instanceof Expression) {
             $where["column"] = $this->expressionToString(data_get($where, "column"));
         }
 
