@@ -263,9 +263,14 @@ trait Caching
 
     protected function checkCooldownAndFlushAfterPersisting(Model $instance, string $relationship = "")
     {
-        if (! $this->isCachable()) {
-            return;
-        }
+        /**
+         * Our usage of the library currently expects model caches to be flushed in the usual way, even
+         * whilst code is run in a `runDisabled` callback. Leaving this check in place introduced all
+         * sorts of issues where caches weren't being flushed where they needed to be.
+         */
+        // if (! $this->isCachable()) {
+        //     return;
+        // }
 
         [$cacheCooldown, $invalidatedAt] = $instance->getModelCacheCooldown($instance);
 
