@@ -276,9 +276,11 @@ class CacheKey
             return "_" . implode("_", $columns);
         }
 
-        return "_" . implode("_", array_map(function ($column) {
+        $columns = array_map(function ($column) {
             return $this->expressionToString($column);
-        }, $columns));
+        }, $columns);
+
+        return "_" . implode("_", $columns);
     }
 
     protected function getRawClauses(array $where) : string
