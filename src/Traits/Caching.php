@@ -41,7 +41,7 @@ trait Caching
         if ($this->scopesAreApplied) {
             return $this;
         }
-        
+
         return parent::applyScopes();
     }
 
@@ -170,7 +170,7 @@ trait Caching
             ?? Container::getInstance()
                 ->make("db")
                 ->query();
-        
+
         if (
             $this->query
             && method_exists($this->query, "getQuery")
@@ -241,7 +241,7 @@ trait Caching
 
         if (
             ! $cacheCooldown
-            || (new Carbon)->now()->diffInSeconds($invalidatedAt) < $cacheCooldown
+            || (new Carbon)->now()->diffInSeconds($invalidatedAt, true) < $cacheCooldown
         ) {
             return;
         }
@@ -263,6 +263,15 @@ trait Caching
 
     protected function checkCooldownAndFlushAfterPersisting(Model $instance, string $relationship = "")
     {
+        /**
+         * Our usage of the library currently expects model caches to be flushed in the usual way, even
+         * whilst code is run in a `runDisabled` callback. Leaving this check in place introduced all
+         * sorts of issues where caches weren't being flushed where they needed to be.
+         */
+        // if (! $this->isCachable()) {
+        //     return;
+        // }
+
         [$cacheCooldown, $invalidatedAt] = $instance->getModelCacheCooldown($instance);
 
         if (! $cacheCooldown) {
@@ -281,7 +290,7 @@ trait Caching
 
         $this->setCacheCooldownSavedAtTimestamp($instance);
 
-        if ((new Carbon)->now()->diffInSeconds($invalidatedAt) >= $cacheCooldown) {
+        if ((new Carbon)->now()->diffInSeconds($invalidatedAt, true) >= $cacheCooldown) {
             $instance->flushCache();
 
             if ($relationship) {
@@ -295,6 +304,11 @@ trait Caching
         $isCacheDisabled = ! Container::getInstance()
             ->make("config")
             ->get("laravel-model-caching.enabled");
+
+        if ($isCacheDisabled) {
+            return false;
+        }
+
         $allRelationshipsAreCachable = true;
 
         if (
@@ -311,7 +325,7 @@ trait Caching
                     ) {
                         return $carry;
                     }
-        
+
                     $relatedModel = $this->model->$related()->getRelated();
 
                     if (
@@ -327,7 +341,6 @@ trait Caching
         }
 
         return $this->isCachable
-            && ! $isCacheDisabled
             && $allRelationshipsAreCachable;
     }
 

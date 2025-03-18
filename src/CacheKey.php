@@ -1,5 +1,8 @@
-<?php namespace GeneaLabs\LaravelModelCaching;
+<?php
 
+namespace GeneaLabs\LaravelModelCaching;
+
+use BackedEnum;
 use Exception;
 use GeneaLabs\LaravelModelCaching\Traits\CachePrefixing;
 use Illuminate\Database\Query\Expression;
@@ -7,6 +10,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Ramsey\Uuid\Uuid;
+use UnitEnum;
 
 class CacheKey
 {
@@ -59,27 +63,6 @@ class CacheKey
         return $key;
     }
 
-    protected function getHavingClauses()
-    {
-        return Collection::make($this->query->havings)->reduce(function ($carry, $having) {
-            $value = $carry;
-            $value .= $this->getHavingClause($having);
-
-            return $value;
-        });
-    }
-
-    protected function getHavingClause(array $having): string
-    {
-        $return = '-having';
-
-        foreach ($having as $key => $value) {
-            $return .= '_' . $key . '_' . str_replace(' ', '_', $value);
-        }
-
-        return $return;
-    }
-
     protected function getBindingsSlug() : string
     {
         if (! method_exists($this->model, 'query')) {
@@ -102,7 +85,7 @@ class CacheKey
         if ($where["type"] !== "Column") {
             return "";
         }
-        
+
         if ($where["first"] instanceof Expression) {
             $where["first"] = $this->expressionToString($where["first"]);
         }
@@ -117,6 +100,27 @@ class CacheKey
     protected function getCurrentBinding(string $type, $bindingFallback = null)
     {
         return data_get($this->query->bindings, "{$type}.{$this->currentBinding}", $bindingFallback);
+    }
+
+    protected function getHavingClauses()
+    {
+        return Collection::make($this->query->havings)->reduce(function ($carry, $having) {
+            $value = $carry;
+            $value .= $this->getHavingClause($having);
+
+            return $value;
+        });
+    }
+
+    protected function getHavingClause(array $having): string
+    {
+        $return = '-having';
+
+        foreach ($having as $key => $value) {
+            $return .= '_' . $key . '_' . str_replace(' ', '_', $value);
+        }
+
+        return $return;
     }
 
     protected function getIdColumn(string $idColumn) : string
@@ -214,7 +218,7 @@ class CacheKey
         }
 
         $orders = collect($this->query->orders);
-        
+
         return $orders
             ->reduce(function ($carry, $order) {
                 if (($order["type"] ?? "") === "Raw") {
@@ -241,7 +245,12 @@ class CacheKey
         $value .= $this->getValuesClause($where);
 
         $column = "";
-        $column .= isset($where["column"]) ? $this->expressionToString($where["column"]) : "";
+
+        if (data_get($where, "column") instanceof Expression) {
+            $where["column"] = $this->expressionToString(data_get($where, "column"));
+        }
+
+        $column .= isset($where["column"]) ? $where["column"] : "";
         $column .= isset($where["columns"]) ? implode("-", $where["columns"]) : "";
 
         return "-{$column}_{$value}";
@@ -260,16 +269,18 @@ class CacheKey
         if (property_exists($this->query, "columns")
             && $this->query->columns
         ) {
-            $columns = array_map(function ($column) {                
+            $columns = array_map(function ($column) {
                 return $this->expressionToString($column);
             }, $this->query->columns);
 
             return "_" . implode("_", $columns);
         }
 
-        return "_" . implode("_", array_map(function ($column) {
+        $columns = array_map(function ($column) {
             return $this->expressionToString($column);
-        }, $columns));
+        }, $columns);
+
+        return "_" . implode("_", $columns);
     }
 
     protected function getRawClauses(array $where) : string
@@ -304,7 +315,7 @@ class CacheKey
 
     protected function getTypeClause($where) : string
     {
-        $type = in_array($where["type"], ["InRaw", "In", "NotIn", "Null", "NotNull", "between", "NotInSub", "InSub", "JsonContains", "Fulltext"])
+        $type = in_array($where["type"], ["InRaw", "In", "NotIn", "Null", "NotNull", "between", "NotInSub", "InSub", "JsonContains", "Fulltext", "JsonContainsKey"])
             ? strtolower($where["type"])
             : strtolower($where["operator"]);
 
@@ -448,11 +459,11 @@ class CacheKey
         return $result;
     }
 
-    private function processEnum(\BackedEnum|\UnitEnum|Expression|string|null $value): string
+    private function processEnum(BackedEnum|UnitEnum|Expression|string|null $value): ?string
     {
-        if ($value instanceof \BackedEnum) {
+        if ($value instanceof BackedEnum) {
             return $value->value;
-        } elseif ($value instanceof \UnitEnum) {
+        } elseif ($value instanceof UnitEnum) {
             return $value->name;
         } elseif ($value instanceof Expression) {
             return $this->expressionToString($value);

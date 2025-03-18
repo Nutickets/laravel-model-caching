@@ -67,6 +67,7 @@ The following are packages we have identified as conflicting:
 - [spatie/laravel-query-builder](https://github.com/spatie/laravel-query-builder)
 - [dwightwatson/rememberable](https://github.com/dwightwatson/rememberable)
 - [kalnoy/nestedset](https://github.com/lazychaser/laravel-nestedset)
+- [laravel-adjacency-list](https://github.com/staudenmeir/laravel-adjacency-list)
 
 ### Things That Don't Work Currently
 The following items currently do no work with this package:
@@ -81,7 +82,7 @@ The following items currently do no work with this package:
 ## Installation
 Be sure to not require a specific version of this package when requiring it:
 ```
-composer require genealabs/laravel-model-caching
+composer require mikebronner/laravel-model-caching
 ```
 
 ### Gotchas If Using With Lumen
